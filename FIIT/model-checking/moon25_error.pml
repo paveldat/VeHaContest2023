@@ -1,15 +1,18 @@
+#define channels_size 5 // the constants is added
+#define max_allowed_zeros 2
+
 mtype:modules = {bku, biusl, engine, others}
 mtype:commands = {enable, disable, reboot}
 mtype:status = {circular, elliptical_start, elliptical_finish}
 mtype:status current_status = circular
 
-chan biusl_commands = [20] of {mtype:commands}
-chan biusl_data = [20] of {bool}
-chan engine_commands = [20] of {mtype:commands}
-chan engine_data = [20] of {bool}
-chan others_commands = [20] of {mtype:commands}
-chan others_data = [20] of {bool}
-chan turn = [0] of {mtype:modules}
+chan biusl_commands = [channels_size] of {mtype:commands}
+chan biusl_data = [channels_size] of {bool}
+chan engine_commands = [channels_size] of {mtype:commands}
+chan engine_data = [channels_size] of {bool}
+chan others_commands = [channels_size] of {mtype:commands}
+chan others_data = [channels_size] of {bool}
+chan turn = [channels_size] of {mtype:modules}
 
 bool is_biusl_enabled = 0;
 bool is_engine_enabled = 0;
@@ -50,7 +53,7 @@ active proctype BKU() {
             :: empty(engine_data) && empty(biusl_data) -> skip
          fi         
          if 
-            :: N_zeros > 10 -> {
+            :: N_zeros > max_allowed_zeros -> {  // constant max_allowed_zeros
                clear_channel(biusl_commands)
                biusl_commands ! reboot
                N_zeros = 0
@@ -152,8 +155,11 @@ active proctype Engine() {
                :: else -> skip
             fi
             if 
-               :: clear_channel(engine_data)
-               :: is_engine_enabled == 1 -> engine_data ! is_engine_data_ok;
+               :: is_engine_enabled == 1 -> // clear_channel is moved to the operator's body 
+               {
+                  clear_channel(engine_data)
+                  engine_data ! is_engine_data_ok;
+               }
                :: else -> skip
             fi
          }
@@ -178,4 +184,4 @@ init
 }
 
 ltl a {[](is_biusl_command_enable_sent -> <>(is_biusl_enabled))}
-ltl b {[](current_status == elliptical_start -> <> (current_status == elliptical_finish && !is_biusl_enabled && !is_engine_enabled))}
+ltl b {[](current_status == elliptical_start -> <>(current_status == elliptical_finish && !is_biusl_enabled && !is_engine_enabled))}
