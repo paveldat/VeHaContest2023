@@ -12,7 +12,7 @@ chan engine_commands = [channels_size] of {mtype:commands}
 chan engine_data = [channels_size] of {bool}
 chan others_commands = [channels_size] of {mtype:commands}
 chan others_data = [channels_size] of {bool}
-chan turn = [channels_size] of {mtype:modules}
+chan turn = [0] of {mtype:modules}
 
 bool is_biusl_enabled = 0;
 bool is_engine_enabled = 0;
